@@ -9,4 +9,4 @@ def hello_world():
     return 'Flask Apache server is UP!!! <br><br>Web App is running! <br><br>Current date-time: ' + str(datetime.datetime.now())
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6000)
+    app.run(host='0.0.0.0', port=3100)
