@@ -1,9 +1,10 @@
-import sys
+"""mod_wsgi entry point. The venv and src path come from WSGIDaemonProcess."""
+
 import logging
+import sys
 
 logging.basicConfig(stream=sys.stderr)
-sys.path.insert(0,"/var/www/flask_apache")
 
-from app import app as application
+from flask_apache import create_app  # noqa: E402
 
-application.secret_key = 'Add your secret key'
+application = create_app()

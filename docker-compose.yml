@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  apache:
+    image: httpd:2.4
+    ports:
+      - "${HTTP_PORT:-3100}:80"
+    volumes:
+      - ./docker/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
