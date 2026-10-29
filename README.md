@@ -46,20 +46,26 @@ make docker-down
 ```bash
 sudo mkdir -p /var/www/flask_apache && sudo chown $USER /var/www/flask_apache
 git clone https://github.com/wallaceespindola/flask-apache /var/www/flask_apache
-cd /var/www/flask_apache && uv sync --no-dev
+cd /var/www/flask_apache
+# keep the uv-managed Python outside $HOME so www-data can read it
+sudo mkdir -p /opt/uv-python && sudo chown $USER /opt/uv-python
+export UV_PYTHON_INSTALL_DIR=/opt/uv-python
+uv sync --no-dev
 
 sudo apt install apache2 apache2-dev
 # mod_wsgi must match the venv Python, so build it from the venv:
 uv pip install mod_wsgi
-uv run mod_wsgi-express module-config | sudo tee /etc/apache2/mods-available/wsgi.load
+.venv/bin/mod_wsgi-express module-config | sudo tee /etc/apache2/mods-available/wsgi.load
 sudo a2enmod wsgi
 
 echo "Listen 3100" | sudo tee -a /etc/apache2/ports.conf
 sudo cp flask_apache.conf /etc/apache2/sites-available/
-sudo a2ensite flask_apache && sudo systemctl reload apache2
+echo 'export SECRET_KEY=change-me' | sudo tee -a /etc/apache2/envvars
+sudo chown -R www-data /var/www/flask_apache
+sudo a2ensite flask_apache && sudo systemctl restart apache2
 ```
 
-Edit `ServerName` in `flask_apache.conf` first. Set `SECRET_KEY` with `SetEnv` or in the daemon process environment, never in the `.wsgi` file.
+Edit `ServerName` in `flask_apache.conf` first. `SECRET_KEY` goes in `/etc/apache2/envvars` because the daemon process inherits Apache's environment. `SetEnv` does not work here: it only reaches the per-request WSGI environ, not `os.environ` at import time. Call `.venv/bin/mod_wsgi-express` directly, since `uv run` would reinstall the dev tools. These steps were tested on Ubuntu 24.04 with Python 3.14.
 
 ## Configuration
 
